@@ -9,6 +9,8 @@ import (
 )
 
 func init() {
+	// source := rand.NewSource(time.Now().Unix())
+	// r := rand.New(source)
 	rand.Seed(time.Now().Unix())
 }
 
@@ -69,6 +71,8 @@ func main() {
 		}
 		wg.Add(1)
 		go addMoney(wsCh, &m, &wg, client, deposit)
+	case "exit":
+		return
 	default:
 		fmt.Println("Unsupported command. You can use commands: balance, deposit, withdrawal, exit")
 	}
