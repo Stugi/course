@@ -5,15 +5,8 @@ import (
 	"sync"
 )
 
-// Напишите код, в котором несколько горутин увеличивают значение целочисленного счётчика
-// и синхронизируют свою работу через канал. Нужно предусмотреть возможность настройки количества
-// используемых горутин и конечного значения счётчика, до которого его следует увеличивать.
-
-// Попробуйте реализовать счётчик с элементами ООП (в виде структуры и методов структуры).
-// Попробуйте реализовать динамическую проверку достижения счётчиком нужного значения.
-
 const amountOfGoroutins int = 6
-const endValue int = 1000
+const endValue int = 2333
 
 func main() {
 
@@ -24,30 +17,34 @@ func main() {
 		go worker(counter, i, endValue)
 	}
 
-	for i := 0; i < amountOfGoroutins; i++ {
-		<-counter.quit
-	}
-
+	<-counter.done
 	fmt.Println(counter.getValue())
 }
 
 type Counter struct {
-	value int
-	mu    sync.Mutex
-	quit  chan bool
+	value    int
+	mu       sync.Mutex
+	quit     chan bool
+	done     chan bool
+	doneFlag bool
 }
 
 func NewCounter() *Counter {
 	return &Counter{
 		value: 0,
 		quit:  make(chan bool),
+		done:  make(chan bool),
 	}
 }
 
 func (c *Counter) Increase() {
+	defer c.mu.Unlock()
 	c.mu.Lock()
+	if c.value >= endValue {
+		c.doneFlag = true
+		return
+	}
 	c.value++
-	c.mu.Unlock()
 }
 
 func (c *Counter) getValue() int {
@@ -60,6 +57,12 @@ func (c *Counter) Quit() {
 	c.quit <- true
 }
 
+func (c *Counter) isDone() bool {
+	defer c.mu.Unlock()
+	c.mu.Lock()
+	return c.doneFlag
+}
+
 func worker(c *Counter, id int, target int) {
 	for {
 		select {
@@ -67,8 +70,9 @@ func worker(c *Counter, id int, target int) {
 			return
 		default:
 			c.Increase()
-			if c.getValue() >= target {
-				c.Quit()
+			if c.isDone() {
+				c.done <- true
+				return
 			}
 		}
 	}
