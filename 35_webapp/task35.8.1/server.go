@@ -56,9 +56,10 @@ func main() {
 func handleConn(conn net.Conn) {
 	// Закрытие соединения.
 	defer conn.Close()
-	rand.Seed(time.Now().UnixNano())
+	// Create a local random number generator
+	localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
-		proverb := proverbs[rand.Intn(len(proverbs))]
+		proverb := proverbs[localRand.Intn(len(proverbs))]
 		conn.Write([]byte(proverb + "\n"))
 		time.Sleep(3 * time.Second)
 	}
