@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"log"
+	"math/rand"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -17,6 +16,18 @@ const addr = "0.0.0.0:12345"
 
 // Протокол сетевой службы.
 const proto = "tcp4"
+
+var proverbs = []string{
+	"Concurrency is not parallelism.",
+	"Channels orchestrate; mutexes serialize.",
+	"Don't communicate by sharing memory, share memory by communicating.",
+	"The bigger the interface, the weaker the abstraction.",
+	"Gofmt's style is no one's favorite, yet gofmt is everyone's favorite.",
+	"A little copying is better than a little dependency.",
+	"Clear is better than clever.",
+	"Reflection is never clear.",
+	"Error handling is important.",
+}
 
 func main() {
 	// Запуск сетевой службы по протоколу TCP
@@ -45,18 +56,10 @@ func main() {
 func handleConn(conn net.Conn) {
 	// Закрытие соединения.
 	defer conn.Close()
-	// Чтение сообщения от клиента.
-	reader := bufio.NewReader(conn)
-	b, err := reader.ReadBytes('\n')
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	// Удаление символов конца строки.
-	msg := strings.TrimSuffix(string(b), "\n")
-	msg = strings.TrimSuffix(msg, "\r")
-	// Если получили "time" - пишем время в соединение.
-	if msg == "time" {
-		conn.Write([]byte(time.Now().String() + "\n"))
+	rand.Seed(time.Now().UnixNano())
+	for {
+		proverb := proverbs[rand.Intn(len(proverbs))]
+		conn.Write([]byte(proverb + "\n"))
+		time.Sleep(3 * time.Second)
 	}
 }
